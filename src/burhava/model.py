@@ -69,6 +69,14 @@ class Problem:
         self.alpha = np.array([a.alpha for a in graph.atoms])
         self.beta = np.array([a.beta for a in graph.atoms])
         self.verifiable = np.array([a.verifiable for a in graph.atoms], dtype=bool)
+        self._bits_f: np.ndarray | None = None
+
+    @property
+    def bits_f(self) -> np.ndarray:
+        """``bits`` as float64 ``(n, 2^n)``, cached; used for fast batched risks."""
+        if self._bits_f is None:
+            self._bits_f = self.bits.astype(np.float64)
+        return self._bits_f
 
     def likelihood(self, i: int, o: int) -> np.ndarray:
         """``P(O_i = o | z)`` for every state ``z`` (shape ``(2^n,)``)."""
@@ -79,7 +87,7 @@ class Problem:
 
     def prior_belief(self) -> Belief:
         """The belief before any verdict: ``w = P(z)``, ``E`` empty."""
-        return Belief(self, self.joint.copy(), {})
+        return Belief(self, self.joint.copy(), {}, ())
 
 
 def joint_table(graph: AssumptionGraph, bits: np.ndarray) -> np.ndarray:
@@ -129,6 +137,7 @@ class Belief:
     problem: Problem
     w: np.ndarray
     evidence: dict[int, int] = field(default_factory=dict)
+    y_obs: tuple[int, ...] = ()
 
     @property
     def total(self) -> float:
@@ -147,7 +156,21 @@ class Belief:
         w = self.w * self.problem.likelihood(i, o)
         if w.sum() <= 0:
             raise ValueError(f"verdict O_{i}={o} has probability 0 under the model")
-        return Belief(self.problem, w, {**self.evidence, i: o})
+        return Belief(self.problem, w, {**self.evidence, i: o}, self.y_obs)
+
+    def observe_y(self, o: int, eps: float) -> Belief:
+        """Bayes update after a noisy reading of the conclusion itself.
+
+        Used by the self-consistency arm: a sample says ``Y = o`` and is wrong
+        with probability ``eps``, i.e. ``P(reading = o | Y = y) = 1-eps`` if
+        ``o == y`` else ``eps``. Returns a new :class:`Belief`.
+        """
+        y = self.problem.y
+        like = np.where(y == bool(o), 1.0 - eps, eps)
+        w = self.w * like
+        if w.sum() <= 0:
+            raise ValueError("conclusion reading has probability 0 under the model")
+        return Belief(self.problem, w, dict(self.evidence), (*self.y_obs, int(o)))
 
     def prob_atom(self, i: int) -> float:
         """Posterior marginal ``P(Z_i = 1 | E)``."""

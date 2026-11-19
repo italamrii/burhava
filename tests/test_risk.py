@@ -89,3 +89,32 @@ def test_bad_sets_rejected():
         set_risk(b.observe(0, 1), L, [0])
     with pytest.raises(ValueError):
         set_risk(b, L, [5])
+
+
+def test_batched_risks_match_set_risk():
+    from burhava.risk import pair_risks, single_risks
+
+    rng = np.random.default_rng(3)
+    for _ in range(60):
+        prob = Problem(random_graph(rng))
+        L = random_loss(rng)
+        b = prob.prior_belief()
+        if prob.n > 2 and rng.random() < 0.5:
+            b = b.observe(0, int(rng.random() < b.prob_verdict(0)))
+        s = single_risks(b, L)
+        pr = pair_risks(b, L)
+        free = [i for i in range(prob.n) if i not in b.evidence]
+        for i in free:
+            assert s[i] == pytest.approx(set_risk(b, L, [i]), abs=1e-12)
+            for j in free:
+                if i != j:
+                    assert pr[i, j] == pytest.approx(set_risk(b, L, [i, j]), abs=1e-12)
+
+
+def test_observe_y():
+    g = AssumptionGraph()
+    g.add_atom("a", 0.5)
+    g.set_conclusion("a")
+    b = Problem(g).prior_belief().observe_y(1, 0.2)
+    assert b.prob_y() == pytest.approx(0.8)
+    assert b.y_obs == (1,)

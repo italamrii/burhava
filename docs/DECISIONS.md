@@ -47,3 +47,34 @@ Each entry records the date, the decision, the alternatives considered and the r
 * **Decision:** `R(S)` is computed with one `bincount` over 2^n states into 2^|S| bins, followed by per-atom 2×2 channel contractions, at cost `O(2^n + |S|2^|S|)`.
 * **Alternatives:** enumerate `o_S` and Bayes-update the full `w` each time, at cost `O(2^|S| · |S| · 2^n)`.
 * **Reason:** It is 10–30× faster at |S| = 3–5. It is checked against the definition-level version on 200 random graphs (`test_fast_matches_naive`).
+
+## D11 — Budget is measured in cost units (2026-11-19, M2)
+* **Decision:** `budget` is the total verification cost allowed. Under uniform cost (`c_i = 1`), it is the number of checks. Under varied cost, costs are integers 1–5 rescaled to mean 1 per instance, so a budget of B buys about B average checks.
+* **Alternatives:** budget = number of checks regardless of cost.
+* **Reason:** The brief has a cost factor {uniform, 1–5}. Only a cost budget lets cost matter.
+
+## D12 — Heuristic arms ignore cost and use the full budget (2026-11-19, M2)
+* **Decision:** Arms 2–5 and 8 score atoms without dividing by cost and stop only when nothing is affordable. Arm 7 also stops at the first failure. Arms 9 and 10 stop when no check has positive value.
+* **Reason:** This is how confidence-based selection is used in practice. The cost factor in the grid shows how much of any gain comes from cost-awareness alone (uniform-cost cells contain no such advantage).
+
+## D13 — Self-consistency arm model (2026-11-19, M2)
+* **Decision:** Arm 6 draws samples of the *conclusion*. Each costs 1 and is wrong with probability ε_SC = 0.3, independently given Y. The final decision uses the exact Bayes posterior.
+* **Alternatives:** samples drawn from the model's own belief (which would carry no information about the truth); correlated samples.
+* **Reason:** Independent samples with a Bayes combination are *generous* to this baseline. ε_SC is a config parameter. The real arm-6 behaviour is measured in Stage C.
+
+## D14 — Arm 8 "propagation score" definition (2026-11-19, M2)
+* **Decision:** `score_i = 2 p_i (1−p_i) |P(Y=1|Z_i=1,E) − P(Y=1|Z_i=0,E)|`. This is the expected absolute change in P(Y=1) if Z_i were revealed.
+* **Reason:** The brief does not define the score. This one uses the graph and the probabilities but neither the loss nor the costs, so it isolates "decision-awareness" from "structure-awareness".
+
+## D15 — Arm 10 lookahead trigger η = 0.05 (relative) (2026-11-19, M2)
+* **Decision:** Arm 10 runs the two-step lookahead when `max_i Δ_i/c_i ≤ η·ρ(E)`, with η = 0.05. It then takes the better of the best pair rate and the best single rate. From the best pair it verifies the member with the higher single score, and it re-plans after every verdict.
+* **Alternatives:** an absolute η; always look ahead (η = ∞); only when stalled (η = 0).
+* **Reason:** A relative threshold is unit-free across loss scales. This value is fixed before Stage A and frozen in PREREGISTRATION.md. It is not tuned.
+
+## D16 — Arm 7 order and verdicts impossible under the model (2026-11-19, M2)
+* **Decision:** Arm 7's "topological order" is the order in which atoms are first used when scanning derived nodes in definition order (premises, then step). If a verdict has probability 0 under a misspecified model, the atom is counted as checked, no update is made, and a `contradictions` counter is incremented.
+* **Reason:** Determinism. The second case cannot occur in Stage A (priors are in (0,1)) but can in Stage B.
+
+## D17 — Batched one-step and pair risks (2026-11-19, M2)
+* **Decision:** `single_risks` and `pair_risks` compute R({i}) for all i and R({i,j}) for all pairs, using matrix products of the bit matrix with the posterior. They are cross-checked against `set_risk` in tests.
+* **Reason:** Arms 9 and 10 evaluate these at every step. Vectorising makes Stage A affordable.

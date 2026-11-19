@@ -129,3 +129,23 @@ Z1 has the *highest* confidence (0.90) yet the *largest* value of checking. This
 
 ## 6. Complexity and timing
 At `n = 20` atoms (2^20 ≈ 1M states), building the joint table takes 0.14 s. Each `R(S)` then takes 4–21 ms for |S| = 0…5 (EXPERIMENTS.md, entry M1-timing).
+
+## 7. The ten selection arms (M2)
+`p_i = P(Z_i=1 ∣ E)` is the current confidence in atom *i*. `Δ_i = ρ(E) − R({i})` is the risk removed by checking *i* alone.
+
+| Arm | Picks next | Uses loss? | Uses cost? | Stops when |
+|---|---|---|---|---|
+| 1 none | nothing | – | – | immediately |
+| 2 random | a random affordable atom | no | no | budget spent |
+| 3 lowest-confidence | lowest `p_i` | no | no | budget spent |
+| 4 highest-entropy | `p_i` closest to 0.5 | no | no | budget spent |
+| 5 highest-degree | the atom most derivations use | no | no | budget spent |
+| 6 self-consistency | a noisy sample of Y (error 0.3) | yes (final decision) | – | budget spent |
+| 7 topological | first unchecked atom in chain order | no | no | first negative verdict |
+| 8 propagation | largest expected shift of P(Y=1) | no | no | budget spent |
+| 9 one-step VoI | largest `Δ_i / c_i` | **yes** | **yes** | no check has value |
+| 10 lookahead VoI | as 9, but if the best `Δ_i/c_i ≤ 0.05·ρ`, also scores pairs `(ρ − R({i,j}))/(c_i+c_j)` | **yes** | **yes** | no single or pair has value |
+
+All arms make the same final decision rule, the Bayes decision under their beliefs.
+
+**Why arm 10 exists.** On the AND counterexample (§5.1), every single check has `Δ_i = 0`, so arm 9 stops at once with loss 0.25. Arm 10 sees that the pair is worth 0.25, checks Z1, and then (if Z1 = 1) checks Z2. With a perfect verifier it is always right (`tests/test_policies.py`).

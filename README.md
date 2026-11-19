@@ -6,7 +6,7 @@
 | Milestone | State |
 |---|---|
 | M1 exact engine | ✅ done: acceptance tests pass, n=20 R(S) in ≤ 21 ms |
-| M2 policies + simulator | not started |
+| M2 policies + simulator | ✅ done: 10 arms, paired simulator |
 | M3 Stage A (synthetic, pre-registered) | not started |
 | M4 Stage B (noise robustness) | not started |
 | M5 Stage C (real LLMs) | not started |

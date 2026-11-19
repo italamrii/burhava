@@ -307,3 +307,34 @@ class AssumptionGraph:
                 if d.step is not None:
                     deg[self._index[d.step][1]] += 1
         return deg
+
+
+def rebuild(
+    graph: AssumptionGraph,
+    atoms: list[Atom] | None = None,
+    sources: dict[str, Source] | None = None,
+    derived: list[DerivedNode] | None = None,
+) -> AssumptionGraph:
+    """A validated copy of ``graph`` with some parts replaced.
+
+    Atom order (and therefore atom indices) must be kept by the caller so that a
+    corrupted copy stays aligned with the true graph.
+    """
+    g = AssumptionGraph()
+    for s in (graph.sources if sources is None else sources).values():
+        g.add_source(s.name, s.u_probs)
+    for a in graph.atoms if atoms is None else atoms:
+        g.add_atom(
+            a.name,
+            a.prior,
+            kind=a.kind,
+            source=a.source,
+            cost=a.cost,
+            alpha=a.alpha,
+            beta=a.beta,
+            verifiable=a.verifiable,
+        )
+    for d in graph.derived if derived is None else derived:
+        g.add_derived(d.name, list(d.derivations))
+    g.set_conclusion(graph.conclusion)
+    return g

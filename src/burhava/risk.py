@@ -156,3 +156,71 @@ def marginal_value(belief: Belief, loss: Loss, S: Iterable[int], i: int) -> floa
     """``Delta_i(S) = R(S) - R(S + {i})``: risk reduction from also verifying i."""
     S = list(S)
     return set_risk(belief, loss, S) - set_risk(belief, loss, S + [i])
+
+
+# --------------------------------------------------------------------------
+# Batched exact risks used by the policies (same maths, vectorised over atoms)
+# --------------------------------------------------------------------------
+def _channels(belief: Belief) -> np.ndarray:
+    """``C[i, o, z] = P(O_i = o | Z_i = z)`` for all atoms, shape (n, 2, 2)."""
+    a, b = belief.problem.alpha, belief.problem.beta
+    C = np.empty((len(a), 2, 2))
+    C[:, 0, 0], C[:, 0, 1] = 1 - a, b
+    C[:, 1, 0], C[:, 1, 1] = a, 1 - b
+    return C
+
+
+def _min_over_decisions(loss: Loss, m0: np.ndarray, m1: np.ndarray) -> np.ndarray:
+    """``min_d L(d,0) m0 + L(d,1) m1`` elementwise."""
+    L = loss.matrix
+    out = L[0, 0] * m0 + L[0, 1] * m1
+    for d in (1, 2):
+        out = np.minimum(out, L[d, 0] * m0 + L[d, 1] * m1)
+    return out
+
+
+def single_risks(belief: Belief, loss: Loss) -> np.ndarray:
+    """``R({i})`` for every atom i at once, shape (n,).
+
+    Equals ``set_risk(belief, loss, [i])`` for unverified atoms (entries for
+    already-verified atoms are meaningless and should be ignored).
+    """
+    p = belief.problem
+    wy = belief.w * p.y
+    w0 = belief.w - wy
+    B = p.bits_f
+    A1, A0 = B @ wy, B @ w0  # mass with z_i = 1, split by Y
+    T1, T0 = wy.sum(), w0.sum()
+    bin1 = np.stack([T1 - A1, A1], axis=1)  # (n, z)
+    bin0 = np.stack([T0 - A0, A0], axis=1)
+    C = _channels(belief)
+    m1 = np.einsum("ioz,iz->io", C, bin1)
+    m0 = np.einsum("ioz,iz->io", C, bin0)
+    return _min_over_decisions(loss, m0, m1).sum(axis=1) / belief.total
+
+
+def pair_risks(belief: Belief, loss: Loss) -> np.ndarray:
+    """``R({i, j})`` for every pair, shape (n, n). Diagonal is meaningless.
+
+    Masses for the four (z_i, z_j) bins come from inclusion-exclusion on
+    ``P_y[i, j] = sum_z w(z) [f(z)=y] z_i z_j``.
+    """
+    p = belief.problem
+    wy = belief.w * p.y
+    w0 = belief.w - wy
+    B = p.bits_f
+    C = _channels(belief)
+    out = np.zeros((p.n, p.n))
+    ms = []
+    for wv in (w0, wy):
+        A = B @ wv
+        P = (B * wv) @ B.T
+        T = wv.sum()
+        bins = np.empty((p.n, p.n, 2, 2))
+        bins[:, :, 1, 1] = P
+        bins[:, :, 1, 0] = A[:, None] - P
+        bins[:, :, 0, 1] = A[None, :] - P
+        bins[:, :, 0, 0] = T - A[:, None] - A[None, :] + P
+        ms.append(np.einsum("iaz,jbx,ijzx->ijab", C, C, bins))
+    out = _min_over_decisions(loss, ms[0], ms[1]).sum(axis=(2, 3)) / belief.total
+    return out
