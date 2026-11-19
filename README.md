@@ -2,28 +2,34 @@
 
 **Which step of a reasoning chain should you verify?** Burhava studies verification selection for LLM reasoning chains. Each candidate check is scored by how much it is expected to reduce the *loss of the final decision* (accept / reject / abstain), divided by its cost. This is classical **Value of Information** (Howard 1966; Krause & Guestrin 2009), and we do not claim the rule is new. We test empirically, under a pre-registered protocol, whether it beats confidence-based selection and whether the advantage survives realistic estimation noise.
 
-## Honest summary
-* **On synthetic chains with a correct model**, VoI with lookahead (arm 10) clearly beats "check the least confident premise" (arm 3) in all four graph structures. The gain is large on mixed and OR graphs, tiny on pure-AND graphs, and grows with the false-rate and with the cost of a false accept.
-* **It survives miscalibrated probabilities** (ECE up to 0.20) and noisy verifiers (5–15%).
-* **But two caveats dominate:**
-  1. A simple loss-blind "how much would this premise move P(conclusion)" score does just as well at budgets 1–2, and better at budgets 3–5 in almost every cell. The win comes mostly from *using the dependency graph*, not from decision-awareness. (This was exploratory, not pre-registered.)
-  2. Everything graph-based collapses once ≳ 5% of dependency edges are wrong. At 10% it is worse than confidence-based selection, and at 25% worse than not verifying.
-* Modelling correlated sources barely matters (H3 rejected).
-* **Real-LLM results (Stage C) are not in yet:** they are waiting for an API budget decision.
+## Summary
+Two pre-registered phases, 24,960,000 simulated verification episodes (counted from the result files), every number with a 95% CI ([RESULTS](docs/RESULTS.md)):
+
+1. **Using the dependency graph to choose checks beats "check the least confident premise"**, in every graph structure. In mixed graphs at budget 2 the loss drops by 0.11, and the gain grows with the false-rate and with the cost of a false accept.
+2. **It survives miscalibrated confidences** (ECE up to 0.20) and noisy verifiers (5–15%).
+3. **Making the *selection* decision-aware (VoI) adds nothing measurable** over a simple loss-blind influence score, confirmed on fresh data (H6c) and across loss ratios 1–30. What matters is graph-aware selection plus a loss-aware *final decision*.
+4. **Stopping early hurts.** "VoI then spend the budget" fixes this (budget-5 loss 0.089 → 0.077).
+5. **Wrong dependency edges are the real danger.** At ≥ 5% edge error every graph-based method loses its edge, and at 25% it is worse than not verifying. Our robust variant (averaging over plausible graphs) keeps the gain up to about 10% edge error. Beyond that, plain self-consistency is best.
+6. Modelling correlated sources barely matters (H3 rejected).
+7. **Real-LLM results (Stage C) are not in yet.** The pipeline is built and tested offline. It is waiting for an API budget and a working key.
+
+**Rule of thumb:** measure how well you recover the reasoning graph first. Below ~2% edge error, use the graph to choose checks and spend the whole budget. Between ~5% and 10%, use the robust variant or self-consistency. Above 10%, use self-consistency.
 
 ## Results
 | ID | Hypothesis | Verdict | Key number (95% CI) |
 |---|---|---|---|
-| H1 | Arm 10 < arm 3 in loss (Stage A) | ✅ supported, 4/4 structures | mixed graphs: +0.112 [+0.107, +0.116] |
-| H2 | Lookahead helps on AND | ✅ supported (small) | +0.0041 [+0.0036, +0.0046] |
-| H3 | Modelling correlation matters | ❌ rejected | 4.1% of the gain (needed ≥ 5%) |
-| H4 | Survives ECE 0.10 + verifier 5% | ✅ supported | +0.065 [+0.052, +0.078] (84% of clean) |
+| H1 | Arm 10 < arm 3 in loss (Stage A) | ✅ 4/4 structures | mixed graphs: +0.112 [+0.107, +0.116] |
+| H2 | Lookahead helps on AND | ✅ (small) | +0.0041 [+0.0036, +0.0046] |
+| H3 | Modelling correlation matters | ❌ | 4.1% of the gain (needed ≥ 5%) |
+| H4 | Survives ECE 0.10 + verifier 5% | ✅ | +0.065 [+0.052, +0.078] |
 | H5 | Transfers to ProofWriter/PrOntoQA | ⏸ not run | API budget pending |
-
-Details, all numbers and sources: [docs/RESULTS.md](docs/RESULTS.md). Every run is logged in [docs/EXPERIMENTS.md](docs/EXPERIMENTS.md).
+| H6a | VoI-then-spend beats VoI (budgets 3–5) | ✅ | +0.0071 [+0.0065, +0.0078] |
+| H6c | Decision-aware selection beats the influence score | ❌ | +0.0000 [−0.0003, +0.0003] |
+| H7a | Robust VoI beats VoI at 10% edge error | ✅ | +0.031 [+0.022, +0.041] |
+| H7d | Robust VoI not harmful at 25% edge error | ❌ | −0.104 vs no verification |
 
 ![Stage A gain](results/figures/stageA_gain_vs_arm3.png)
-![Stage B edge errors](results/figures/stageB_gain_vs_edge.png)
+![Robust vs plain VoI](results/figures/phase2_robust_vs_edge.png)
 
 ## Quickstart
 ```bash
@@ -61,4 +67,4 @@ print(set_risk(b, L), [marginal_value(b, L, [], i) for i in range(3)])  # 0.6 [0
 `src/burhava/`: `graph`, `model`, `risk` (exact engine) · `policies` (10 arms) · `simulate` (paired episodes) · `generators`, `noise`, `runner`, `stage_b`, `analysis`, `stats` · `llm/` (Stage C, offline) · `cli`.
 
 ## Docs
-[Research brief](docs/RESEARCH_BRIEF.md) · [Math](docs/MATH.md) · [Pre-registration](docs/PREREGISTRATION.md) · [Results](docs/RESULTS.md) · [Experiments](docs/EXPERIMENTS.md) · [Decisions](docs/DECISIONS.md) · [Related work](docs/RELATED_WORK.md) · [Paper skeleton](paper/main.tex)
+[Research brief](docs/RESEARCH_BRIEF.md) · [Math](docs/MATH.md) · [Pre-registration](docs/PREREGISTRATION.md) · [Pre-registration 2](docs/PREREGISTRATION_2.md) · [Results](docs/RESULTS.md) · [Experiments](docs/EXPERIMENTS.md) · [Decisions](docs/DECISIONS.md) · [Related work](docs/RELATED_WORK.md) · [Paper skeleton](paper/main.tex)

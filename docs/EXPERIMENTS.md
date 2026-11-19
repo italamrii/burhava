@@ -30,7 +30,7 @@ One entry per run: date, git hash, command, config, runtime, key numbers, verdic
 * **Git:** working tree after `fb7eedc`; the code is committed unchanged in the M3 commit.
 * **Command:** `burhava grid --config configs/stageA.yaml --out results/stageA --n-graphs 1000 --workers 4`, then `burhava report --stage A --in results/stageA`
 * **Config hash:** 8b1d5e3d2f. **Runtime:** 1,192 s (grid) and 530 s (report).
-* **Size:** 256 cells × 1,000 graphs × 4 budgets × 10 arms, plus arm 10-indep in shared cells. 11.8M episodes.
+* **Size:** 256 cells × 1,000 graphs × 4 budgets × 10 arms, plus arm 10-indep in shared cells. 10.75M episodes (counted).
 * **Key numbers:** budget 2, main loss. The gain is `loss(arm 3) − loss(arm 10)`, with 95% paired bootstrap CIs and n = 64,000 per structure.
 
 | Structure | Gain | 95% CI |
@@ -79,3 +79,42 @@ One entry per run: date, git hash, command, config, runtime, key numbers, verdic
 * Data downloaded and checksummed (`scripts/download_data.sh`). 2,900 usable ProofWriter instances (mean 5.4 atoms) and 1,400 PrOntoQA instances.
 * Cost estimate: `python scripts/estimate_stage_c_cost.py --n-test 600 --n-cal 200 --seed 0` gives 62,163 calls, ~11.87M input tokens and ~4.04M output tokens.
 * H5: not evaluated.
+
+## P2-A — Phase 2: "VoI then spend" (arm 11), 1000 graphs/cell (2026-11-19)
+* **Git:** `f38c0e0` (pre-registration 2 frozen in `2903a0d` before this run).
+* **Command:** `burhava grid --config configs/phase2_A.yaml --out results/phase2_A --n-graphs 1000 --workers 4`, then `python scripts/report_phase2.py`
+* **Config hash:** 7ad100ae2b. Seed 20261201 (fresh). **Runtime:** 580 s.
+* **Mean loss by budget** (arms 3 / 8 / 10 / 11):
+
+| Budget | Arm 3 | Arm 8 | Arm 10 | Arm 11 |
+|---|---|---|---|---|
+| 1 | 0.250 | 0.205 | 0.206 | 0.206 |
+| 2 | 0.230 | 0.157 | 0.157 | 0.156 |
+| 3 | 0.208 | 0.122 | 0.124 | 0.121 |
+| 5 | 0.156 | 0.077 | 0.089 | 0.077 |
+
+* **H6a** (arm 11 vs arm 10, budgets 3 + 5): +0.0071 [+0.0065, +0.0078]. **Supported.**
+* **H6b** (arm 11 vs arm 8, non-inferiority with margin 0.002): +0.0000 [−0.0003, +0.0003]. **Supported.**
+* **H6c** (arm 11 beats arm 8): same CI, which includes 0. **Rejected.**
+
+## P2-B — Phase 2: robust VoI (arm 12) under edge errors, 1000 graphs/cell (2026-11-19)
+* **Git:** `f38c0e0`. **Command:** `burhava grid --config configs/phase2_B.yaml --out results/phase2_B --n-graphs 1000 --workers 4`, then `python scripts/report_phase2.py`
+* **Config hash:** 5d54e75d9e. Seed 20261202 (fresh). **Runtime:** 1,390 s.
+* **Mean loss at ECE 0.10, verifier 5%:**
+
+| Edge error | Arm 1 (none) | Arm 3 | Arm 6 (self-consistency) | Arm 8 | Arm 10 | Arm 12 (robust) |
+|---|---|---|---|---|---|---|
+| 0 | 0.318 | 0.294 | 0.278 | 0.227 | **0.226** | 0.240 |
+| 5% | 0.333 | 0.321 | **0.290** | 0.298 | 0.298 | 0.294 |
+| 10% | 0.344 | 0.345 | **0.296** | 0.362 | 0.361 | 0.329 |
+| 25% | 0.377 | 0.425 | **0.325** | 0.540 | 0.541 | 0.481 |
+
+* **H7a** (12 vs 10 at 10% edge error): +0.0314 [+0.0220, +0.0412]. **Supported.**
+* **H7b** (12 vs 3 at 10%): +0.0158 [+0.0017, +0.0298]. **Supported.**
+* **H7c** (cost of robustness at edge 0): mean[loss12 − loss10] = +0.0138 ≤ 0.0162. **Supported.**
+* **H7d** (12 vs no verification at 25%): −0.1037 [−0.1242, −0.0831]. **Rejected.**
+* **By structure, H7a:** chain +0.060, and +0.027, mixed +0.051; **or −0.012 [−0.023, +0.000]**.
+
+## P2-X — EXPLORATORY: arm 10 vs arm 8 across loss ratios (2026-11-19)
+* **Command:** inline analysis of `results/stageA_loss`, saved to `results/summaries/explore_arm10_vs_arm8_by_ratio.json`.
+* **Result:** the difference is ≤ 0.0007 in absolute value at ratios 1, 3, 10 and 30, and every CI includes 0. Decision-aware *selection* adds nothing measurable over influence-based selection, even when false accepts cost 30× more than false rejects. (All arms already make the final *decision* with the loss-aware Bayes rule.)

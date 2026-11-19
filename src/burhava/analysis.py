@@ -85,7 +85,14 @@ def _style(ax, zero_line=True):
 
 
 def fig_gain_lines(
-    rows: list[dict], xkey: str, xlabel: str, title: str, path: Path, logx=False, labels=None
+    rows: list[dict],
+    xkey: str,
+    xlabel: str,
+    title: str,
+    path: Path,
+    logx=False,
+    labels=None,
+    ylabel="loss reduction vs. baseline\n(positive = arm 10 better)",
 ):
     """One line per structure: gain of arm 10 over a baseline vs ``xkey``, with 95% CIs."""
     import matplotlib
@@ -141,9 +148,7 @@ def fig_gain_lines(
     ax.set_xticks(xs)
     ax.set_xticklabels([str(x) for x in xs])
     ax.set_xlabel(xlabel, color=INK2, fontsize=10)
-    ax.set_ylabel(
-        "loss reduction vs. baseline\n(positive = arm 10 better)", color=INK2, fontsize=10
-    )
+    ax.set_ylabel(ylabel, color=INK2, fontsize=10)
     ax.set_title(title, color=INK, fontsize=11, loc="left")
     ax.legend(
         frameon=False,

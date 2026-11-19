@@ -90,3 +90,34 @@ Not run. See DECISIONS.md D23 for the cost estimate, the blocked credential and 
 * The verifier errors are independent given the truth.
 * The self-consistency arm is modelled generously (independent samples).
 * The exploratory edge grid was added after seeing the pre-registered edge results. It is labelled as exploratory and uses a fresh seed.
+
+---
+
+# Phase 2: fixing the two weaknesses (pre-registered separately, fresh seeds)
+Source: `results/summaries/phase2_summary.json` (`python scripts/report_phase2.py`). Protocol: [PREREGISTRATION_2.md](PREREGISTRATION_2.md), frozen before the data.
+
+| ID | Hypothesis | Verdict | Number |
+|---|---|---|---|
+| H6a | "VoI then spend" (arm 11) beats arm 10 at budgets 3–5 | ✅ supported | +0.0071 [+0.0065, +0.0078] |
+| H6b | Arm 11 is no worse than the influence score (arm 8) | ✅ supported | +0.0000 [−0.0003, +0.0003] |
+| H6c | Decision-aware selection beats the influence score | ❌ **rejected** | same CI, which includes 0 |
+| H7a | Robust VoI (arm 12) beats plain VoI at 10% edge error | ✅ supported | +0.0314 [+0.0220, +0.0412] |
+| H7b | Robust VoI beats arm 3 at 10% edge error | ✅ supported (narrowly) | +0.0158 [+0.0017, +0.0298] |
+| H7c | Robustness is cheap when the graph is right | ✅ supported (narrowly) | costs 0.0138 (margin 0.0162) |
+| H7d | Robust VoI is no longer harmful at 25% edge error | ❌ **rejected** | −0.104 vs no verification |
+
+![robust vs plain](../results/figures/phase2_robust_vs_edge.png)
+![arm 11 vs arm 8](../results/figures/phase2_arm11_vs_arm8.png)
+
+## What phase 2 adds
+1. **The early-stopping problem is solved.** Arm 11 lowers budget-5 loss from 0.089 to 0.077, matching the best arm.
+2. **The selection rule's loss-awareness is not what helps, and this is now confirmed.** On fresh data, arm 11 and the loss-blind influence score are indistinguishable at every budget. An exploratory check across loss ratios 1–30 agrees (all |differences| ≤ 0.0007, all CIs include 0). What matters is (a) choosing checks with the dependency graph and the probabilities, and (b) making the final decision with the loss-aware Bayes rule, which every arm already does.
+3. **Robust VoI widens the safe zone, but only partly.** Averaging over plausible graphs keeps a positive gain over arm 3 up to about 10% edge error, where plain VoI already loses. At 25% edge error it is still worse than not verifying.
+4. **When the graph is unreliable, ignore it.** At ≥ 5% edge error the best arm is self-consistency (arm 6), which never uses the graph (ECE 0.10 losses: 0.290 / 0.296 / 0.325 at 5 / 10 / 25%).
+
+## A practical decision rule supported by all runs
+* **Dependency graph recovered with ≲ 2% edge error:** select checks by graph influence or VoI, spend the whole budget, and decide with the loss.
+* **About 5–10% edge error:** use robust VoI, or simply self-consistency.
+* **Worse than 10%:** use self-consistency. Graph-based selection does harm.
+
+This turns Stage C's first measurement, dependency-recovery F1, into the deciding quantity.
