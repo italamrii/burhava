@@ -276,6 +276,22 @@ class LookaheadVoI(Policy):
         return _argbest(s1, cand, cost)
 
 
+class VoIThenSpend(LookaheadVoI):
+    """Arm 11 (phase 2): arm 10 while it finds positive value; once it would
+    stop with budget left, spend the remainder by propagation score (arm 8).
+
+    Motivation (Stage A, exploratory): arm 10 stops early, and the loss-blind
+    arm 8 beat it at budgets 3-5. Under a correct model, extra checks never
+    raise the expected risk (MATH.md section 5.4), so spending the budget is free.
+    """
+
+    name = "a11_voi_spend"
+
+    def select(self, state, budget_left):
+        i = super().select(state, budget_left)
+        return PropagationScore().select(state, budget_left) if i is None else i
+
+
 def topo_order(graph) -> list[int]:
     """Atoms in the order the chain first uses them (premises, then step),
     scanning derived nodes in definition order; unused atoms go last."""
@@ -304,3 +320,14 @@ def all_arms(eta: float = 0.05, sc_eps: float = 0.3) -> list[Policy]:
         OneStepVoI(),
         LookaheadVoI(eta=eta),
     ]
+
+
+def arms_for(cfg_arms: dict) -> list[Policy]:
+    """Arms named in ``cfg_arms["include"]`` (default: the 10 original arms)."""
+    pool = all_arms(eta=cfg_arms["eta"], sc_eps=cfg_arms["sc_eps"])
+    pool.append(VoIThenSpend(eta=cfg_arms["eta"]))
+    names = cfg_arms.get("include")
+    if not names:
+        return pool[:10]
+    by = {a.name: a for a in pool}
+    return [by[n] for n in names]

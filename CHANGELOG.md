@@ -1,5 +1,11 @@
 # Changelog
 
+## Phase 2 — fixing the two weaknesses (2026-11-19)
+* `PREREGISTRATION_2.md` frozen in its own commit before any phase-2 data; fresh seeds.
+* New: arm 11 (`VoIThenSpend`), arm 12 (robust VoI via `MixtureProblem` + `graph_ensemble`), `scripts/report_phase2.py`.
+* **H6a ✅** Arm 11 fixes early stopping (budget 5 loss 0.089 → 0.077). **H6b ✅** Non-inferior to arm 8. **H6c ❌** Decision-aware selection adds nothing over the loss-blind influence score.
+* **H7a ✅ H7b ✅ H7c ✅** Robust VoI beats plain VoI at 10% edge error, restores the gain over arm 3, and costs little when the graph is right. **H7d ❌** At 25% edge error it is still worse than not verifying. Self-consistency is the best arm whenever edge error is ≥ 5%.
+
 ## M6 — Write-up package (2026-11-19)
 * `README.md` (summary, honest scope, quickstart, results table, figures, "What this is not"), `docs/RESULTS.md` (every hypothesis, numbers with CIs, sources).
 * `paper/main.tex` skeleton; `scripts/make_paper_numbers.py` writes `paper/numbers/*.tex` from `results/summaries/`.
@@ -21,7 +27,7 @@
 * `PREREGISTRATION.md` frozen in its own commit before any Stage A data existed.
 * `generators.py`: two independent generators (layered AND/OR DAGs; ProofWriter-style rules with distractors), plus structure statistics.
 * `runner.py` / `cli.py` (`burhava run|grid|report`), `stats.py` (paired bootstrap, ECE), `analysis.py` (hypothesis tests, tables, figures), `noise.independent_version`.
-* Ran 256 cells × 1,000 graphs (11.8M episodes, 20 min) and a loss sweep.
+* Ran 256 cells × 1,000 graphs (10.75M episodes, 20 min) and a loss sweep.
 * **Gate 1 passed:** H1 supported in all 4 structures; H2 supported (small effect); H3 rejected (ignoring correlation costs 4.1% of the gain; the threshold was 5%).
 * Exploratory finding: the loss-blind propagation score (arm 8) matches arm 10 at budgets ≤ 2 and beats it at budgets ≥ 3, because arm 10 stops early.
 

@@ -189,3 +189,37 @@ class Belief:
     def prob_verdict(self, i: int) -> float:
         """Predictive probability of a positive verdict, ``P(O_i = 1 | E)``."""
         return float(self.w @ self.problem.likelihood(i, 1) / self.total)
+
+
+class MixtureProblem(Problem):
+    """A belief that averages over several candidate dependency graphs.
+
+    Used by the robust arm (arm 12) when the recovered graph may be wrong.
+    All graphs must have the same atoms (same priors, costs and verifier
+    errors) and differ only in their rules. The state space is the
+    pair (z, k), where ``k`` is the graph index:
+
+        P(z, k) = P(z) * pi_k,        Y(z, k) = f_k(z)
+
+    Every risk and policy routine works on this unchanged, because it only
+    needs arrays over states (``bits``, ``joint``, ``y``).
+    """
+
+    def __init__(self, graphs: list[AssumptionGraph], weights: list[float] | None = None):
+        base = Problem(graphs[0])
+        K = len(graphs)
+        pi = np.full(K, 1.0 / K) if weights is None else np.asarray(weights, float)
+        pi = pi / pi.sum()
+        names = [a.name for a in graphs[0].atoms]
+        for g in graphs[1:]:
+            if [a.name for a in g.atoms] != names:
+                raise ValueError("all graphs must share the same atoms in the same order")
+        self.graph = graphs[0]
+        self.graphs = graphs
+        self.n = base.n
+        self.bits = np.tile(base.bits, (1, K))
+        self.joint = np.concatenate([base.joint * p for p in pi])
+        self.y = np.concatenate([g.conclusion_values(base.bits) for g in graphs])
+        self.cost, self.alpha, self.beta = base.cost, base.alpha, base.beta
+        self.verifiable = base.verifiable
+        self._bits_f = None

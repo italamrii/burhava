@@ -156,3 +156,11 @@ def corrupt_edges(
 def with_verifier(graph: AssumptionGraph, error: float) -> AssumptionGraph:
     """Copy of ``graph`` with ``alpha_i = beta_i = error`` for every atom."""
     return rebuild(graph, atoms=[replace(a, alpha=error, beta=error) for a in graph.atoms])
+
+
+def graph_ensemble(
+    recovered: AssumptionGraph, r_hat: float, k: int, rng: np.random.Generator
+) -> list[AssumptionGraph]:
+    """The recovered graph plus ``k - 1`` copies with edges re-corrupted at
+    rate ``r_hat``: a cheap sample of 'graphs that might be the true one'."""
+    return [recovered] + [corrupt_edges(recovered, r_hat, rng)[0] for _ in range(k - 1)]

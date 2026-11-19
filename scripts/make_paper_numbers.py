@@ -11,6 +11,7 @@ OUT = Path("paper/numbers")
 OUT.mkdir(parents=True, exist_ok=True)
 a = json.loads((S / "stageA_summary.json").read_text())
 b = json.loads((S / "stageB_summary.json").read_text())
+p2 = json.loads((S / "phase2_summary.json").read_text())
 
 
 def ci(r, d=3):
@@ -38,6 +39,10 @@ mixed = h1["mixed"]
     f"{ci(mixed)}). The advantage survives calibration error (ECE 0.10, verifier error 5\\%: "
     f"{ci(h4['G_B_ece10_ver5_matched'])}), but a loss-blind influence score matches it "
     f"at budgets of 1--2 and beats it at 3--5, "
-    f"and the advantage disappears once 5\\% of dependency edges are wrong.\n"
+    f"and the advantage disappears once 5\\% of dependency edges are wrong. "
+    f"A second pre-registered study confirms that decision-aware selection adds nothing over "
+    f"influence-based selection ({ci(p2['H6c_arm11_vs_arm8'], 4)}), and that averaging over "
+    f"plausible graphs restores a gain at 10\\% edge error "
+    f"({ci(p2['H7b_arm12_vs_arm3_edge10'])}) but not at 25\\%.\n"
 )
 print("wrote", sorted(p.name for p in OUT.iterdir()))

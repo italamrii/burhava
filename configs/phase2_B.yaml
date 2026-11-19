@@ -1,0 +1,22 @@
+# Phase 2, part B (H7): does robust VoI (arm 12) survive dependency-edge errors?
+# Frozen in docs/PREREGISTRATION_2.md before any phase-2 data.
+name: phase2_B
+seed: 20261202
+generators: [layered, rules]
+max_atoms: 14
+grid:
+  structure: [chain, and, or, mixed]
+  depth: [4]
+  false_rate: [0.1, 0.2, 0.3]
+  correlation: [independent, shared]
+  cost: [uniform]
+budgets: [2]
+loss: {false_reject: 1.0, abstain: 0.6, ratios: [10]}
+arms: {eta: 0.05, sc_eps: 0.3, include: [a01_none, a03_lowconf, a06_selfcons, a08_propagation, a10_voi2]}
+robust: {r_hat: 0.10, k: 8}
+noise:
+  ece_targets: [0.0, 0.10]
+  ece_sigma: {0.0: 0.0, 0.05: 0.6372, 0.10: 1.0323, 0.20: 1.9891}
+  edge: [0.0, 0.05, 0.10, 0.25]
+  verifier: [0.05]
+  assumption: [matched]
