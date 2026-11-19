@@ -10,3 +10,5 @@ dist/
 results/*
 !results/.gitkeep
 !results/summaries/
+data/raw/
+!results/figures/

@@ -78,3 +78,29 @@ Each entry records the date, the decision, the alternatives considered and the r
 ## D17 — Batched one-step and pair risks (2026-11-19, M2)
 * **Decision:** `single_risks` and `pair_risks` compute R({i}) for all i and R({i,j}) for all pairs, using matrix products of the bit matrix with the posterior. They are cross-checked against `set_risk` in tests.
 * **Reason:** Arms 9 and 10 evaluate these at every step. Vectorising makes Stage A affordable.
+
+## D18 — Generator encodings of the grid factors (2026-11-19, M3, before data)
+* **Decision:** See the `generators.py` docstring.
+  * The false-rate is the marginal prior false probability `f·g_i`, with `g_i ~ U(0.5, 1.5)`.
+  * Shared-source correlation uses 2–3 sources, `P(bad) = 0.3`. A bad source makes its atoms 4× as likely to be false. Marginals are kept equal to the independent case (verified: mean false probability 0.15 under both).
+  * Atoms are capped at 14.
+  * Stage A uses a perfect verifier.
+* **Known limitation, recorded before any arm was run:** under generator A, pure-OR graphs have P(Y)≈1.00 (many alternative routes), so verification can barely change the decision there. This was not tuned away.
+
+## D19 — Two generators, alternating within each cell (2026-11-19, M3)
+* **Decision:** Even graph ids come from generator A (layered), odd from generator B (rules). Hypothesis tests pool both; per-generator gains are reported. Generator B adds 1–2 distractor facts that are irrelevant to the conclusion (as in ProofWriter); generator A does not.
+
+## D20 — Stage A N = 1000 graphs per cell (2026-11-19, M3)
+* **Decision:** The 100-graph pilot took 115 s on 4 cores, projecting about 19 minutes for N = 1000. N = 1000 (as planned) was therefore run. The choice depended only on runtime. The pilot outcomes were not used for any decision (the pilot directory exists only to debug the analysis code).
+
+## D21 — Stage C scope (2026-11-19, M5, offline part)
+* **ProofWriter:** CWA depth-5 test; only negation-free theories (725/985), and only true questions with strategy "proof" and QDep ≥ 2, with no NAF. This gives 2,900 instances (mean 5.4 atoms, max 14).
+* **PrOntoQA-OOD:** the "ProofsOnly" files; 1,400 usable items, each with a linear chain.
+* **Corruption:** each context fact is replaced by its negated sentence with probability ρ. Truth is recomputed by forward chaining on the clean-minus-corrupted facts.
+* **Atoms:** facts and rules used by the gold proofs; rules are step atoms.
+* **Dependency recovery:** edges (premise id or producing rule) → rule.
+
+## D22 — Stage B noise encodings (2026-11-19, M4)
+* **Calibration:** `logit p' = logit p + σ·ε_i`, `ε_i ~ N(0,1)`, drawn once per graph and reused across σ (paired). σ per target comes from `scripts/calibrate_ece.py --seed 999` on a separate sample: 0.637, 1.032 and 1.989 for ECE 0.05, 0.10 and 0.20. The achieved population ECE is reported.
+* **Edges:** each premise edge is corrupted with probability r, by drop / rewire / add with equal chance.
+* **Verifier mismatch:** the method assumes a perfect verifier when the true error is > 0, and 5% error when the true verifier is perfect.

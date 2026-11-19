@@ -1,5 +1,13 @@
 # Changelog
 
+## M3 — Stage A: oracle synthetic (2026-11-19)
+* `PREREGISTRATION.md` frozen in its own commit before any Stage A data existed.
+* `generators.py`: two independent generators (layered AND/OR DAGs; ProofWriter-style rules with distractors), plus structure statistics.
+* `runner.py` / `cli.py` (`burhava run|grid|report`), `stats.py` (paired bootstrap, ECE), `analysis.py` (hypothesis tests, tables, figures), `noise.independent_version`.
+* Ran 256 cells × 1,000 graphs (11.8M episodes, 20 min) and a loss sweep.
+* **Gate 1 passed:** H1 supported in all 4 structures; H2 supported (small effect); H3 rejected (ignoring correlation costs 4.1% of the gain; the threshold was 5%).
+* Exploratory finding: the loss-blind propagation score (arm 8) matches arm 10 at budgets ≤ 2 and beats it at budgets ≥ 3, because arm 10 stops early.
+
 ## M2 — Policies and simulator (2026-11-19)
 * `policies.py`: the 10 arms with one interface `select(state, budget_left)`. Ties go to lower cost, then lower index.
 * `simulate.py`: paired worlds (true state, every verdict and every SC sample drawn before any arm runs). Each episode returns decision, true Y, realised loss, model risk at stop, P(Y), checks, cost, risk evaluations and wall time.

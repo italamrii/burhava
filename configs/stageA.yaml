@@ -1,0 +1,14 @@
+# Stage A main grid (M3). Frozen choices: see docs/PREREGISTRATION.md.
+name: stageA_main
+seed: 20261119
+generators: [layered, rules]
+max_atoms: 14
+grid:
+  structure: [chain, and, or, mixed]
+  depth: [2, 4, 6, 8]
+  false_rate: [0.0, 0.1, 0.2, 0.3]
+  correlation: [independent, shared]
+  cost: [uniform, varied]
+budgets: [1, 2, 3, 5]
+loss: {false_reject: 1.0, abstain: 0.6, ratios: [10]}
+arms: {eta: 0.05, sc_eps: 0.3}
