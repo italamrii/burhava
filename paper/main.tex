@@ -1,0 +1,56 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,booktabs,graphicx,hyperref}
+\title{Which Step Should You Check? An Empirical Study of Decision-Risk-Aware Verification Selection for Reasoning Chains}
+\author{Burhava project}
+\date{Draft}
+\begin{document}
+\maketitle
+
+\begin{abstract}
+% Fill ONLY with numbers from results/summaries/*.json (see docs/RESULTS.md).
+We study which premise or inference step of a reasoning chain to verify under a budget.
+The selection rule is classical Value of Information (VoI): verify the atom whose
+verdict is expected to reduce the loss of the final accept/reject/abstain decision
+the most per unit cost. We make no claim that this rule is new; we test empirically,
+under a pre-registered protocol, whether it beats confidence-based selection and
+whether the advantage survives estimation noise. \input{numbers/abstract_numbers.tex}
+\end{abstract}
+
+\section{Introduction}
+% Problem: verification budgets; confidence-based selection; decision loss is what matters.
+% Contribution: empirical, pre-registered comparison; boundary conditions under noise.
+
+\section{Related work}
+% Value of information: Howard 1966; Krause \& Guestrin 2009.
+% Adaptive submodularity: Golovin \& Krause 2011; non-submodular VoI surrogates: Chen et al. 2015 (DiRECt).
+% Stochastic Boolean function evaluation: Deshpande, Hellerstein \& Kletenik 2014.
+% Troubleshooting: Heckerman, Breese \& Rommelse 1995. DTProbLog: Van den Broeck et al. 2010.
+% LLM verification / claim-level confidence: four arXiv items from the brief -- VERIFY before citing.
+% Benchmarks: RuleTaker (Clark et al. 2020), ProofWriter (Tafjord et al. 2021), PrOntoQA (Saparov \& He 2023).
+
+\section{Method: verification selection as a VoI instance}
+% Notation from docs/MATH.md: atoms $Z_i$, AND/OR rules, verifier errors $\alpha_i,\beta_i$,
+% loss $L(d,y)$, Bayes risk $\rho$, set risk $R(S)$, marginal value $\Delta_i(S)$.
+% Arms 9 (one-step $\Delta_i/c_i$) and 10 (two-step lookahead when stalled); AND counterexample.
+
+\section{Experiments}
+\subsection{Stage A: oracle synthetic}
+% Grid, two generators, paired design, pre-registration (docs/PREREGISTRATION.md).
+\input{numbers/stageA_table.tex}
+\begin{figure}[t]\centering
+\includegraphics[width=.8\linewidth]{../results/figures/stageA_gain_vs_arm3.png}
+\caption{Gain of arm 10 over lowest-confidence-first by structure and budget (95\% CIs).}
+\end{figure}
+\subsection{Stage B: noise robustness}
+\input{numbers/stageB_table.tex}
+\subsection{Stage C: LLM behaviour on ProofWriter and PrOntoQA}
+% Not yet run (API budget pending approval).
+
+\section{Limitations}
+% Exact enumeration ($n\le 20$); synthetic priors; generator-specific effects;
+% Stage C pending; verifier error model independent given $Z$.
+
+\section{Conclusion}
+
+\end{document}

@@ -1,5 +1,10 @@
 # Changelog
 
+## M6 — Write-up package (2026-11-19)
+* `README.md` (summary, honest scope, quickstart, results table, figures, "What this is not"), `docs/RESULTS.md` (every hypothesis, numbers with CIs, sources).
+* `paper/main.tex` skeleton; `scripts/make_paper_numbers.py` writes `paper/numbers/*.tex` from `results/summaries/`.
+* `Makefile`: `reproduce-small` (51 s measured) and `reproduce-full` (about 45 min on 4 cores).
+
 ## M5 — Stage C: offline part only (2026-11-19)
 * `llm/proofwriter.py`, `llm/prontoqa.py`: loaders, gold dependency graphs, controlled premise corruption, truth by forward chaining, dependency-edge F1.
 * `llm/client.py` (call accounting per arm; the real client refuses without `BURHAVA_ALLOW_SPEND=1`), `llm/prompts.py`, offline tests with a mock LLM.

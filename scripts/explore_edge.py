@@ -26,7 +26,12 @@ for t in sorted(w.ece_target.unique()):
         for base in ("a03_lowconf", "a01_none", "a06_selfcons", "a08_propagation"):
             row[f"vs_{base}"] = paired_bootstrap((s[base] - s["a10_voi2"]).to_numpy())
         out.append(row)
-        print(f"ECE {t:.2f} edge {e:.2f}: " + "  ".join(
-            f"{k}={v['mean']:+.4f}[{v['lo']:+.4f},{v['hi']:+.4f}]"
-            for k, v in row.items() if k.startswith("vs_")))
+        print(
+            f"ECE {t:.2f} edge {e:.2f}: "
+            + "  ".join(
+                f"{k}={v['mean']:+.4f}[{v['lo']:+.4f},{v['hi']:+.4f}]"
+                for k, v in row.items()
+                if k.startswith("vs_")
+            )
+        )
 json.dump(out, open("results/summaries/stageB_edge_explore.json", "w"), indent=2)
