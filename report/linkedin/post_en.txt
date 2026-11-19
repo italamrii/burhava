@@ -1,0 +1,22 @@
+Is your AI double-checking the wrong step?
+
+When an AI answers a complex question, its answer rests on a chain of assumptions. Checking every one is expensive, so the practical question is: which one do you check first?
+
+The common approach is to check the step the model feels least confident about.
+
+In a research project (Burhava), we tested this on ~25 million simulated cases. We pre-registered and froze every hypothesis before running a single experiment.
+
+What we found:
+✅ Choosing checks by the "reasoning map" (which assumptions the conclusion actually depends on) cut errors by ~30% compared with "least-confident first".
+✅ The gain held up when the model's confidence was miscalibrated and when the checker itself made mistakes.
+💡 Surprise: you don't need heavy decision math. A simple "how much would this assumption change the answer?" score performed just as well.
+⚠️ The catch: if the map itself is wrong on 5%+ of its links, the advantage disappears. Above 10%, relying on it does harm.
+
+The takeaway for teams building AI verification:
+First measure how accurately your system recovers what an answer depends on, then pick your checking strategy based on that number.
+
+To be transparent: these results come from simulation, not yet from real language models. That is our next step.
+
+🤝 If your company builds AI agents or output-verification pipelines, I'm looking for partners to test this on real systems. Let's talk.
+
+#AI #LLM #AISafety #MachineLearning #AIAgents #Research
