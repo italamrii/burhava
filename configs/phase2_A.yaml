@@ -1,0 +1,15 @@
+# Phase 2, part A (H6): does "VoI then spend" (arm 11) fix early stopping?
+# Frozen in docs/PREREGISTRATION_2.md before any phase-2 data.
+name: phase2_A
+seed: 20261201
+generators: [layered, rules]
+max_atoms: 14
+grid:
+  structure: [chain, and, or, mixed]
+  depth: [4, 8]
+  false_rate: [0.1, 0.2, 0.3]
+  correlation: [independent, shared]
+  cost: [uniform, varied]
+budgets: [1, 2, 3, 5]
+loss: {false_reject: 1.0, abstain: 0.6, ratios: [10]}
+arms: {eta: 0.05, sc_eps: 0.3, include: [a03_lowconf, a08_propagation, a10_voi2, a11_voi_spend], indep_arm: false}

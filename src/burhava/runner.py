@@ -21,7 +21,7 @@ import yaml
 from .generators import GENERATORS, GenConfig, structure_stats
 from .model import Problem
 from .noise import independent_version
-from .policies import LookaheadVoI, all_arms
+from .policies import LookaheadVoI, arms_for
 from .risk import Loss
 from .simulate import draw_world, run_episode
 
@@ -59,7 +59,7 @@ def run_cell(cell: dict, cfg: dict, out_dir: str | Path, n_graphs: int) -> Path:
     path = out_dir / f"cell_{cell['cell_id']:04d}.csv.gz"
     if path.exists():
         return path
-    arms = all_arms(eta=cfg["arms"]["eta"], sc_eps=cfg["arms"]["sc_eps"])
+    arms = arms_for(cfg["arms"])
     indep_arm = LookaheadVoI(eta=cfg["arms"]["eta"])
     indep_arm.name = "a10_voi2_indep"
     lc = cfg["loss"]
@@ -88,7 +88,7 @@ def run_cell(cell: dict, cfg: dict, out_dir: str | Path, n_graphs: int) -> Path:
         for budget in cfg["budgets"]:
             for ratio, L in losses.items():
                 runs = [(a, truth) for a in arms]
-                if indep is not None:
+                if indep is not None and cfg["arms"].get("indep_arm", True):
                     runs.append((indep_arm, indep))
                 for arm, model in runs:
                     r = run_episode(arm, model, L, world, float(budget), policy_seed=wseed)

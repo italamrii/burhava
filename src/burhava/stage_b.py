@@ -19,15 +19,16 @@ import numpy as np
 import pandas as pd
 
 from .generators import GENERATORS, GenConfig
-from .model import Problem
+from .model import MixtureProblem, Problem
 from .noise import (
     corrupt_edges,
+    graph_ensemble,
     marginal_priors,
     perturb_calibration,
     population_ece,
     with_verifier,
 )
-from .policies import all_arms
+from .policies import LookaheadVoI, arms_for
 from .risk import Loss
 from .runner import _graph_seeds, cells, config_hash
 from .simulate import draw_world, run_episode
@@ -45,7 +46,10 @@ def run_cell_b(cell: dict, cfg: dict, out_dir: Path, n_graphs: int) -> Path:
     if path.exists():
         return path
     nz = cfg["noise"]
-    arms = all_arms(eta=cfg["arms"]["eta"], sc_eps=cfg["arms"]["sc_eps"])
+    arms = arms_for(cfg["arms"])
+    rob = cfg.get("robust")
+    robust_arm = LookaheadVoI(eta=cfg["arms"]["eta"])
+    robust_arm.name = "a12_robust_voi"
     lc = cfg["loss"]
     L = Loss.from_costs(10 * lc["false_reject"], lc["false_reject"], lc["abstain"])
     budget = float(cfg["budgets"][0])
@@ -101,10 +105,15 @@ def run_cell_b(cell: dict, cfg: dict, out_dir: Path, n_graphs: int) -> Path:
             world = draw_world(truth, wseed, sc_eps=cfg["arms"]["sc_eps"])
             for assumption in nz["assumption"]:
                 ae = assumed_error(float(e), assumption)
-                for (r, t), mg in mis.items():
+                for ci, ((r, t), mg) in enumerate(mis.items()):
                     model = Problem(with_verifier(mg, ae))
-                    for arm in arms:
-                        res = run_episode(arm, model, L, world, budget, policy_seed=wseed)
+                    runs = [(a, model) for a in arms]
+                    if rob:
+                        ens_rng = np.random.default_rng([wseed, 202, ci])
+                        ens = graph_ensemble(with_verifier(mg, ae), rob["r_hat"], rob["k"], ens_rng)
+                        runs.append((robust_arm, MixtureProblem(ens)))
+                    for arm, mdl in runs:
+                        res = run_episode(arm, mdl, L, world, budget, policy_seed=wseed)
                         res.update(
                             cell_id=cell["cell_id"],
                             gid=gid,
