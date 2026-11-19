@@ -74,3 +74,8 @@ One entry per run: date, git hash, command, config, runtime, key numbers, verdic
 | 10% | −0.048 [−0.070, −0.028] | −0.023 [−0.046, −0.001] |
 
 * **Reading:** the advantage needs dependency-edge error ≲ 2–5%. At 10%, arm 10 is worse than arm 3 and worse than not verifying at all.
+
+## M5 — Stage C: NOT RUN (awaiting API budget approval) (2026-11-19)
+* Data downloaded and checksummed (`scripts/download_data.sh`). 2,900 usable ProofWriter instances (mean 5.4 atoms) and 1,400 PrOntoQA instances.
+* Cost estimate: `python scripts/estimate_stage_c_cost.py --n-test 600 --n-cal 200 --seed 0` gives 62,163 calls, ~11.87M input tokens and ~4.04M output tokens.
+* H5: not evaluated.

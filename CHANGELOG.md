@@ -1,5 +1,11 @@
 # Changelog
 
+## M5 — Stage C: offline part only (2026-11-19)
+* `llm/proofwriter.py`, `llm/prontoqa.py`: loaders, gold dependency graphs, controlled premise corruption, truth by forward chaining, dependency-edge F1.
+* `llm/client.py` (call accounting per arm; the real client refuses without `BURHAVA_ALLOW_SPEND=1`), `llm/prompts.py`, offline tests with a mock LLM.
+* `scripts/download_data.sh` (checksums), `scripts/estimate_stage_c_cost.py`.
+* **Not run:** no API calls; H5 not evaluated. It is waiting for budget approval and one design decision (D23).
+
 ## M4 — Stage B: noise robustness (2026-11-19)
 * `noise.py`: logit-space miscalibration (σ calibrated to target ECE by `scripts/calibrate_ece.py`), edge corruption (drop/rewire/add), verifier error. `stage_b.py`: paired runner and report.
 * Ran 24 cells × 500 graphs × 72 noise conditions (8.6M episodes, 11 min).
