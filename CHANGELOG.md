@@ -1,5 +1,11 @@
 # Changelog
 
+## M4 — Stage B: noise robustness (2026-11-19)
+* `noise.py`: logit-space miscalibration (σ calibrated to target ECE by `scripts/calibrate_ece.py`), edge corruption (drop/rewire/add), verifier error. `stage_b.py`: paired runner and report.
+* Ran 24 cells × 500 graphs × 72 noise conditions (8.6M episodes, 11 min).
+* **Gate 2 passed:** H4 supported. At ECE 0.10 with verifier 5%, the gain is 84% of its clean value, with the CI above 0. Calibration error up to 0.20 does not remove the advantage.
+* **Boundary found:** dependency-edge errors. Exploratory fine grid: the gain holds at ≤ 2% edge error, vanishes at 5%, and turns negative at 10%. All graph-based arms become overconfident.
+
 ## M3 — Stage A: oracle synthetic (2026-11-19)
 * `PREREGISTRATION.md` frozen in its own commit before any Stage A data existed.
 * `generators.py`: two independent generators (layered AND/OR DAGs; ProofWriter-style rules with distractors), plus structure statistics.

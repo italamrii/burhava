@@ -49,3 +49,28 @@ One entry per run: date, git hash, command, config, runtime, key numbers, verdic
 * **Command:** `burhava grid --config configs/stageA_loss_sweep.yaml --out results/stageA_loss --n-graphs 1000 --workers 4`, then `burhava report --stage A-loss --in results/stageA_loss`
 * **Config hash:** b2c6c802da. **Runtime:** 200 s.
 * **Key numbers:** the gain over arm 3 rises with the false-accept/false-reject ratio in OR and mixed graphs (mixed: +0.079 at ratio 1 → +0.193 at ratio 30). It is flat in chain (+0.03 to +0.06) and small in AND (+0.003 to +0.007). Full table: `results/summaries/stageA_loss_summary.json`.
+
+## M4-B — Stage B noise robustness, 500 graphs/cell (2026-11-19)
+* **Git:** working tree after `7d3b4fc` (M3); the code is committed unchanged in the M4 commit.
+* **Calibration of σ:** `python scripts/calibrate_ece.py --seed 999` gave σ = 0.637, 1.032 and 1.989.
+* **Command:** `burhava grid --config configs/stageB.yaml --out results/stageB --n-graphs 500 --workers 3`, then `burhava report --stage B --in results/stageB`
+* **Config hash:** 77a04bbd1e. **Runtime:** 688 s (grid) and 93 s (report).
+* **Size:** 24 cells × 500 graphs × 72 noise conditions × 10 arms. 8.64M episodes.
+* **Achieved noise:** population ECE was 0.046, 0.092 and 0.189 for targets 0.05, 0.10 and 0.20. Edge error was 0.100 and 0.250 for targets 0.10 and 0.25.
+* **H4:** G_A (clean) = +0.0775 [+0.0701, +0.0852]. G_B (ECE 0.10, verifier 5% matched) = +0.0648 [+0.0522, +0.0775]. G_B/G_A = 0.84 ≥ 0.25 and the CI excludes 0, so **H4 is supported and Gate 2 passed**. By structure at the H4 point: chain +0.035, **and +0.001 [−0.001, +0.004] (n.s.)**, or +0.114, mixed +0.109.
+* **Calibration:** the gain stays positive at every ECE level tested (up to 0.20) and every verifier error (0/5/15%, matched or mismatched). The one exception is verifier 15% mismatched at ECE 0.05: +0.014 [−0.001, +0.029].
+* **Edge errors (secondary, pre-registered levels):** at 10% edge error the gain over arm 3 turns negative (for example −0.045 [−0.066, −0.025] at verifier 5%, ECE 0). At 25% it is strongly negative (−0.13 to −0.21). Arms 8, 9 and 10 all fall below no-verification at 25% edge error: their model risk is about 0.20 while the realised loss is about 0.53, i.e. overconfidence.
+
+## M4-E — EXPLORATORY (not pre-registered): fine edge-error grid (2026-11-19)
+* **Command:** `burhava grid --config configs/stageB_edge_explore.yaml --out results/stageB_edge --n-graphs 500`, then `python scripts/explore_edge.py results/stageB_edge`
+* **Config hash:** e65010a80c. **Runtime:** 63 s. Seed 20261122, independent of the Stage B seed.
+* **Gain of arm 10 over arm 3** (verifier 5% matched):
+
+| Edge error | ECE 0 | ECE 0.10 |
+|---|---|---|
+| 0 | +0.052 [+0.040, +0.063] | +0.065 [+0.051, +0.080] |
+| 2% | +0.034 [+0.020, +0.048] | +0.049 [+0.033, +0.065] |
+| 5% | −0.005 [−0.023, +0.013] | +0.013 [−0.008, +0.033] |
+| 10% | −0.048 [−0.070, −0.028] | −0.023 [−0.046, −0.001] |
+
+* **Reading:** the advantage needs dependency-edge error ≲ 2–5%. At 10%, arm 10 is worse than arm 3 and worse than not verifying at all.

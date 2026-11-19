@@ -102,7 +102,9 @@ def fig_gain_lines(
         d = df[df.structure == s].sort_values(xkey)
         if d.empty:
             continue
-        off = (k - 1.5) * (0.04 if logx else 0.06) * (1 if not logx else 1)
+        # small horizontal dodge so CIs do not overlap: 1.5% of the x-range per series
+        span = (max(xs) - min(xs)) or 1.0
+        off = (k - 1.5) * (0.04 if logx else 0.015 * span)
         x = d[xkey].to_numpy(float) * (10**off if logx else 1) + (0 if logx else off)
         ax.errorbar(
             x,
@@ -114,7 +116,7 @@ def fig_gain_lines(
             markersize=5,
             capsize=0,
             elinewidth=1.2,
-            label=s,
+            label=(labels or {}).get(s, s),
         )
         ends.append([d["mean"].iloc[-1], (labels or {}).get(s, s), x[-1]])
     # end-of-line labels, pushed apart so they never collide

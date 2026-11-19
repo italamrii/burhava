@@ -1,0 +1,24 @@
+# Stage B (M4): noise robustness. Sub-grid frozen in docs/PREREGISTRATION.md (H4).
+name: stageB_edge_explore  # EXPLORATORY, not pre-registered
+seed: 20261122
+generators: [layered, rules]
+max_atoms: 14
+grid:
+  structure: [chain, and, or, mixed]
+  depth: [4]
+  false_rate: [0.1, 0.2, 0.3]
+  correlation: [independent, shared]
+  cost: [uniform]
+budgets: [2]
+loss: {false_reject: 1.0, abstain: 0.6, ratios: [10]}
+arms: {eta: 0.05, sc_eps: 0.3}
+noise:
+  ece_targets: [0.0, 0.10]
+  # from: python scripts/calibrate_ece.py --seed 999
+  ece_sigma: {0.0: 0.0, 0.05: 0.6372, 0.10: 1.0323, 0.20: 1.9891}
+  edge: [0.0, 0.02, 0.05, 0.10]
+  verifier: [0.05]
+  # matched: method assumes the true error rate.
+  # mismatched: method assumes a perfect verifier when the true error is > 0,
+  #             and 5% error when the true verifier is perfect.
+  assumption: [matched]
